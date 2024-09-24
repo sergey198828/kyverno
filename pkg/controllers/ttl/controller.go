@@ -29,7 +29,7 @@ const (
 type controller struct {
 	name         string
 	client       metadata.Getter
-	queue        workqueue.TypedRateLimitingInterface[any]
+	queue        workqueue.RateLimitingInterface
 	lister       cache.GenericLister
 	informer     cache.SharedIndexInformer
 	registration cache.ResourceEventHandlerRegistration
@@ -48,7 +48,7 @@ func newController(client metadata.Getter, metainformer informers.GenericInforme
 	if gvr.Group != "" {
 		name = gvr.Group + "/" + name
 	}
-	queue := workqueue.NewTypedRateLimitingQueueWithConfig(workqueue.DefaultTypedControllerRateLimiter[any](), workqueue.TypedRateLimitingQueueConfig[any]{Name: name})
+	queue := workqueue.NewRateLimitingQueueWithConfig(workqueue.DefaultControllerRateLimiter(), workqueue.RateLimitingQueueConfig{Name: name})
 	c := &controller{
 		name:     name,
 		client:   client,
@@ -57,7 +57,6 @@ func newController(client metadata.Getter, metainformer informers.GenericInforme
 		informer: metainformer.Informer(),
 		logger:   logger,
 		metrics:  newTTLMetrics(logger),
-		gvr:      gvr,
 	}
 	enqueue := controllerutils.LogError(logger, controllerutils.Parse(controllerutils.MetaNamespaceKey, controllerutils.Queue(queue)))
 	registration, err := controllerutils.AddEventHandlers(
@@ -145,7 +144,7 @@ func (c *controller) reconcile(ctx context.Context, logger logr.Logger, itemKey 
 		attribute.String("resource_namespace", metaObj.GetNamespace()),
 		attribute.String("resource_group", c.gvr.Group),
 		attribute.String("resource_version", c.gvr.Version),
-		attribute.String("resource_resource", c.gvr.Resource),
+		attribute.String("resource", c.gvr.Resource),
 	}
 	// if the object is being deleted, return early
 	if metaObj.GetDeletionTimestamp() != nil {
