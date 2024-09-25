@@ -70,6 +70,9 @@
 {{- with .protectManagedResources -}}
   {{- $flags = append $flags (print "--protectManagedResources=" .enabled) -}}
 {{- end -}}
+{{- with .reports -}}
+  {{- $flags = append $flags (print "--reportsChunkSize=" .chunkSize) -}}
+{{- end -}}
 {{- with .registryClient -}}
   {{- $flags = append $flags (print "--allowInsecureRegistry=" .allowInsecure) -}}
   {{- $flags = append $flags (print "--registryCredentialHelpers=" (join "," .credentialHelpers)) -}}
@@ -86,9 +89,6 @@
   {{- end -}}
   {{- with .root -}}
     {{- $flags = append $flags (print "--tufRoot=" .) -}}
-  {{- end -}}
-  {{- with .rootRaw -}}
-    {{- $flags = append $flags (print "--tufRootRaw=" .) -}}
   {{- end -}}
 {{- end -}}
 {{- with $flags -}}
